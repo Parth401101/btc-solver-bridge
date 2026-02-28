@@ -18,7 +18,9 @@ This project models a simplified architecture where:
 - Bitcoin confirmations are observed
 - Settlement is finalized on a simulated EVM contract
 
-The goal is to explore the architectural structure and failure modes of solver-based bridges.
+The system models intent propagation, solver bidding, BTC locking via simulated HTLCs, confirmation observation, and conditional settlement on an EVM-side contract.
+
+The goal is to explore the architectural structure, coordination mechanics, and failure modes of solver-based bridges.
 
 ---
 
@@ -34,11 +36,11 @@ The goal is to explore the architectural structure and failure modes of solver-b
 
 ## System Components
 
-- **User** — Creates a bridge intent.
-- **Coordinator (Off-chain)** — Broadcasts intents and collects solver bids.
-- **Solvers (N)** — Compete to fulfill intents and lock BTC.
-- **Bitcoin Layer (Simulated)** — Produces blocks and confirmations.
-- **Settlement Contract (Simulated EVM)** — Finalizes value release.
+- **User** — Creates a bridge intent specifying amount, destination, and timeout.
+- **Coordinator (Off-chain)** — Broadcasts intents and collects solver bids. Does not custody funds.
+- **Solvers (N)** — Compete to fulfill intents, lock BTC, and execute settlement.
+- **Bitcoin Layer (Simulated)** — Produces confirmations and models HTLC-based locking.
+- **Settlement Contract (Simulated EVM)** — Finalizes value release or triggers refunds.
 
 Full architectural details are documented in `docs/architecture.md`.
 
@@ -53,10 +55,12 @@ This project does not:
 - Provide a frontend interface
 - Attempt production-level security
 - Design tokenomics
+- Replace existing bridge implementations
 
 It is a structural and architectural simulation only.
 
 ---
+
 ## Project Structure
 ```
 btc-solver-bridge/
@@ -82,24 +86,40 @@ btc-solver-bridge/
 ├── main.py
 └── README.md
 ```
+
+---
+
 ## Roadmap
 
 - [ ] Architecture specification
 - [ ] Intent lifecycle modeling
 - [ ] Multi-solver competition logic
 - [ ] Confirmation-based settlement handling
-- [ ] Timeout and failure simulation
+- [ ] Timeout and refund simulation
+- [ ] Failure scenario modeling
 - [ ] Metrics and reporting
+
+---
+
+## What This Demonstrates
+
+- Understanding of solver-based bridge architecture
+- Awareness of trust boundaries in cross-chain systems
+- Modeling of coordination and liveness assumptions
+- Structured simulation of failure modes
+- Clean separation between protocol layers
 
 ---
 
 ## Why This Project Exists
 
-Solver-based bridges introduce new architectural patterns:
+Solver-based bridges shift liquidity provisioning from custodial models to competitive, capital-constrained actors coordinated off-chain.
 
-- Off-chain coordination
+This introduces new architectural patterns:
+
+- Off-chain intent propagation
 - Competitive liquidity provisioning
 - Probabilistic finality handling
 - Cross-domain settlement guarantees
 
-This simulator exists to explore those patterns clearly and structurally.
+This simulator exists to explore those patterns clearly, structurally, and transparently.
