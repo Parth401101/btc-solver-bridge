@@ -62,13 +62,33 @@ It is a structural and architectural simulation only.
 
 btc-solver-bridge/
 
-├── core/
-├── bitcoin/
 ├── bridge/
+│   ├── intent.py
+│   ├── coordinator.py
+│   ├── solver.py
+│   ├── settlement.py
+│   └── timeout.py
+│
+├── bitcoin/
+│   ├── htlc.py
+│   └── confirmation.py
+│
 ├── economics/
+│   ├── bidding.py
+│   └── capital.py
+│
 ├── simulation/
+│   ├── runner.py
+│   └── scenarios.py
+│
 ├── docs/
-└── main.py
+│   ├── architecture.md
+│   └── failure_modes.md
+│
+├── tests/
+│
+├── main.py
+└── README.md
 
 ---
 
