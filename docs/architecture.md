@@ -278,3 +278,4 @@ This models solver competition as a capital allocation problem.
 - Document all trust assumptions.
 
 ---
+See docs/threat_model.md for adversarial analysis.
