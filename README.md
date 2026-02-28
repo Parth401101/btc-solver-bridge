@@ -57,41 +57,31 @@ This project does not:
 It is a structural and architectural simulation only.
 
 ---
-
 ## Project Structure
-
+```
 btc-solver-bridge/
-
 ├── bridge/
 │   ├── intent.py
 │   ├── coordinator.py
 │   ├── solver.py
 │   ├── settlement.py
 │   └── timeout.py
-│
 ├── bitcoin/
 │   ├── htlc.py
 │   └── confirmation.py
-│
 ├── economics/
 │   ├── bidding.py
 │   └── capital.py
-│
 ├── simulation/
 │   ├── runner.py
 │   └── scenarios.py
-│
 ├── docs/
 │   ├── architecture.md
 │   └── failure_modes.md
-│
 ├── tests/
-│
 ├── main.py
 └── README.md
-
----
-
+```
 ## Roadmap
 
 - [ ] Architecture specification
