@@ -16,6 +16,7 @@ class Intent:
         self.max_fee = max_fee
         self.state = IntentState.CREATED
         self.winning_solver = None
+        self.htlc = None
 
     def __repr__(self):
         return (

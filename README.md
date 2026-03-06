@@ -1,8 +1,6 @@
 # BTC Solver Bridge
 
-A simulation of a competitive solver-based Bitcoin bridge architecture inspired by modern intent-based bridge designs such as Garden.
-
-This project focuses on coordination, solver competition, settlement guarantees, and architectural tradeoffs — not production implementation.
+Simulation of a solver-based Bitcoin bridge — modeling coordinator selection, HTLC locking, settlement guarantees, and failure modes. Architectural research, not production code.
 
 ---
 
@@ -81,7 +79,9 @@ btc-solver-bridge/
 │   └── scenarios.py
 ├── docs/
 │   ├── architecture.md
-│   └── failure_modes.md
+│   ├── threat_model.md
+│   ├── failure_modes.md
+│   └── state_machine.md
 ├── tests/
 ├── main.py
 └── README.md
@@ -91,23 +91,16 @@ btc-solver-bridge/
 
 ## Roadmap
 
-- [ ] Architecture specification
+- [x] Architecture specification
+- [x] Threat model
+- [x] Failure mode analysis
+- [x] State machine design
 - [ ] Intent lifecycle modeling
 - [ ] Multi-solver competition logic
 - [ ] Confirmation-based settlement handling
 - [ ] Timeout and refund simulation
 - [ ] Failure scenario modeling
 - [ ] Metrics and reporting
-
----
-
-## What This Demonstrates
-
-- Understanding of solver-based bridge architecture
-- Awareness of trust boundaries in cross-chain systems
-- Modeling of coordination and liveness assumptions
-- Structured simulation of failure modes
-- Clean separation between protocol layers
 
 ---
 
