@@ -25,7 +25,6 @@ The primary goal of this simulator is to model:
 ---
 
 ## 2. High-Level System Flow
-
 ```
 User
  │
@@ -66,9 +65,25 @@ This avoids escrow bootstrapping complexity and double-lock race conditions.
 
 ---
 
-## 3. System Components
+## 3. Component Interaction Map
+```
+Intent → Coordinator → Solver → HTLC
+              │
+              ↓
+       CapitalManager
+              │
+              ↓
+   ConfirmationTracker → Settlement → User
+              │
+              ↓
+       TimeoutHandler
+```
 
-### 3.1 Intent — `bridge/intent.py`
+---
+
+## 4. System Components
+
+### 4.1 Intent — `bridge/intent.py`
 
 Represents a user's request to swap assets cross-chain.
 
@@ -76,15 +91,13 @@ Represents a user's request to swap assets cross-chain.
 - `intent_id`
 - `user_address`
 - `source_amount_btc`
-- `destination_asset`
-- `deadline`
 - `max_fee`
 
-> **Design Note:** In production, intents would be signed. In this simulator, signature verification is omitted for scope control.
+> **Design Note:** In production, intents would be signed by the user's private key. In this simulator, signature verification is omitted for scope control. Fields like `destination_asset` and `deadline` are planned for future expansion.
 
 ---
 
-### 3.2 Coordinator — `bridge/coordinator.py`
+### 4.2 Coordinator — `bridge/coordinator.py`
 
 The coordinator orchestrates bidding and selection.
 
@@ -114,7 +127,7 @@ Censorship introduces liveness risk, not fund loss.
 
 ---
 
-### 3.3 Solver — `bridge/solver.py`
+### 4.3 Solver — `bridge/solver.py`
 
 Solvers are rational liquidity providers.
 
@@ -135,7 +148,7 @@ Solvers are rational liquidity providers.
 
 ---
 
-### 3.4 HTLC Simulation — `bitcoin/htlc.py`
+### 4.4 HTLC Simulation — `bitcoin/htlc.py`
 
 Models Bitcoin-side atomicity.
 
@@ -152,33 +165,34 @@ Models Bitcoin-side atomicity.
 
 ---
 
-### 3.5 Confirmation Tracker — `bitcoin/confirmation.py`
+### 4.5 Confirmation Tracker — `bitcoin/confirmation.py`
 
 Simulates Bitcoin probabilistic finality.
 
 - Tracks block production
-- Emits event after configurable confirmation depth
+- Emits event when confirmation depth threshold is reached
+- Settlement contract listens for this event and releases funds
 - Mitigates reorg risk probabilistically
 
 Default threshold: 3 confirmations (configurable)
 
 ---
 
-### 3.6 Settlement Contract — `bridge/settlement.py`
+### 4.6 Settlement Contract — `bridge/settlement.py`
 
 Simulates deterministic EVM-side asset release.
 
 **Behavior:**
-- Waits for confirmed HTLC
-- Verifies parameters match intent
-- Transfers destination asset
+- Waits for confirmation event from ConfirmationTracker
+- Verifies HTLC parameters match intent
+- Transfers destination asset to user
 - Emits settlement completion event
 
-> Assumes deterministic execution (no reorg modeling on EVM side).
+> Assumes deterministic execution. No reorg modeling on EVM side.
 
 ---
 
-### 3.7 Capital Manager — `economics/capital.py`
+### 4.7 Capital Manager — `economics/capital.py`
 
 Tracks solver liquidity.
 
@@ -187,11 +201,11 @@ Tracks solver liquidity.
 - Restore capital on settlement or reclaim
 - Prevent overbidding beyond liquidity
 
-This enforces realistic capital constraints and models opportunity cost.
+Coordinator depends on CapitalManager to validate solver eligibility before selection.
 
 ---
 
-### 3.8 Bidding Engine — `economics/bidding.py`
+### 4.8 Bidding Engine — `economics/bidding.py`
 
 **Auction Model:**
 - First-price sealed bid
@@ -202,7 +216,7 @@ This enforces realistic capital constraints and models opportunity cost.
 
 ---
 
-### 3.9 Timeout Handler — `bridge/timeout.py`
+### 4.9 Timeout Handler — `bridge/timeout.py`
 
 Handles all expiry scenarios:
 
@@ -214,10 +228,38 @@ Ensures eventual resolution of all states.
 
 ---
 
-## 4. Economic Model
+### 4.10 Simulation Runner — `simulation/runner.py`
 
-Solver expected profit:
+Orchestrates full end-to-end simulation runs.
 
+`scenarios.py` injects failure conditions — coordinator down, solver offline, capital exhaustion — to test protocol resilience under adversarial conditions.
+
+---
+
+## 5. Intent State Machine
+```
+CREATED
+  │
+  ▼
+QUOTED
+  │
+  ▼
+WINNER_SELECTED
+  │
+  ├──────────────────┐
+  ▼                  ▼
+BTC_LOCKED        EXPIRED (solver offline / timeout)
+  │
+  ├──────────────────┐
+  ▼                  ▼
+SETTLED           EXPIRED (user griefing / EVM delay)
+```
+
+See `docs/state_machine.md` for full actor-level state transitions.
+
+---
+
+## 6. Economic Model
 ```
 Profit = Fee - Capital Lock Cost - Risk Cost
 
@@ -234,7 +276,7 @@ This models solver competition as a capital allocation problem.
 
 ---
 
-## 5. Failure Modes Summary
+## 7. Failure Modes Summary
 
 | Failure | Impact | Resolution |
 |---|---|---|
@@ -246,9 +288,11 @@ This models solver competition as a capital allocation problem.
 
 > No failure mode results in permanent fund loss under honest Bitcoin consensus assumptions.
 
+See `docs/failure_modes.md` for full recovery logic.
+
 ---
 
-## 6. Trust Assumptions
+## 8. Trust Assumptions
 
 - Coordinator acts honestly in selection.
 - Solvers are economically rational.
@@ -259,7 +303,7 @@ This models solver competition as a capital allocation problem.
 
 ---
 
-## 7. Upgrade Paths
+## 9. Upgrade Paths
 
 - On-chain decentralized solver auction
 - Solver bonding and slashing
@@ -269,7 +313,7 @@ This models solver competition as a capital allocation problem.
 
 ---
 
-## 8. Core Design Philosophy
+## 10. Core Design Philosophy
 
 - Avoid unnecessary escrow complexity.
 - Keep capital commitment post-selection.
@@ -278,4 +322,22 @@ This models solver competition as a capital allocation problem.
 - Document all trust assumptions.
 
 ---
-See docs/threat_model.md for adversarial analysis.
+
+## 11. Glossary
+
+| Term | Definition |
+|---|---|
+| Intent | A user's request to swap assets cross-chain without specifying execution path |
+| Solver | A capital provider that competes to fulfill intents for a fee |
+| Coordinator | Off-chain actor that selects winning solver and orchestrates flow |
+| HTLC | Hash Time Locked Contract — cryptographic lock ensuring atomic settlement |
+| Hashlock | SHA256 hash of a secret preimage; unlocks funds when preimage revealed |
+| Timelock | Block height or timestamp after which solver can reclaim locked BTC |
+| Confirmation Depth | Number of Bitcoin blocks built on top of a transaction before it's considered final |
+| Liveness | The property that the system continues making progress under non-adversarial conditions |
+
+---
+
+See `docs/threat_model.md` for adversarial analysis.
+See `docs/failure_modes.md` for recovery logic.
+See `docs/state_machine.md` for full state transitions.
