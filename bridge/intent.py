@@ -7,6 +7,9 @@ class IntentState(Enum):
     QUOTED = "QUOTED"
     WINNER_SELECTED = "WINNER_SELECTED"
     BTC_LOCKED = "BTC_LOCKED"
+    SETTLED = "SETTLED"
+    EXPIRED = "EXPIRED"
+
 
 class Intent:
     def __init__(self, user_address, source_amount_btc, max_fee):

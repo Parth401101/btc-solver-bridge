@@ -14,7 +14,6 @@ class Solver:
     def generate_bid(self, intent):
         if not self.can_bid(intent):
             return None
-
         fee = intent.source_amount_btc * self.fee_rate
         return {
             "solver": self,
@@ -22,4 +21,8 @@ class Solver:
         }
 
     def __repr__(self):
-        return f"Solver(id={self.solver_id}, capital={self.capital_manager.available_capital})"
+        return (
+            f"Solver(id={self.solver_id}, "
+            f"capital={self.capital_manager.available_capital}, "
+            f"fee_rate={self.fee_rate})"
+        )

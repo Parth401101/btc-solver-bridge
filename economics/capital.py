@@ -12,3 +12,6 @@ class CapitalManager:
 
     def release(self, amount):
         self.available_capital += amount
+
+    def __repr__(self):
+        return f"CapitalManager(available={self.available_capital})"
