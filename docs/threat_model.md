@@ -1,13 +1,12 @@
+# Threat Model: BTC Solver Bridge
 
-## 9. Threat Model
-
-### 9.1 Security Goals
+## 1. Security Goals
 
 The system aims to guarantee:
 
 1. **Safety** — Locked BTC cannot be stolen by any party.
 2. **Atomicity** — User receives destination asset if and only if solver can claim BTC.
-3. **Eventual Resolution** — All intents resolve to either `Settled` or `Expired`.
+3. **Eventual Resolution** — All intents resolve to either `SETTLED` or `EXPIRED`.
 4. **Capital Integrity** — Solvers cannot oversubscribe liquidity.
 
 The system does **not** guarantee:
@@ -17,9 +16,9 @@ The system does **not** guarantee:
 
 ---
 
-### 9.2 Adversary Types
+## 2. Adversary Types
 
-#### A. Malicious Solver
+### A. Malicious Solver
 
 **Capabilities:**
 - Submits fake competitive bids
@@ -41,95 +40,136 @@ The system does **not** guarantee:
 
 ---
 
-#### B. Malicious User
+### B. Malicious User
 
 **Capabilities:**
 - Submits intent but never reveals preimage
-- Attempts griefing to lock solver capital
+- Attempts griefing to lock solver capital indefinitely
 
 **Attack Goals:**
 - Capital exhaustion
-- Strategic denial of service
+- Strategic denial of service against solvers
 
 **Mitigations:**
-- HTLC timelock refund
-- Solver fee compensates risk
-- Capital lock duration bounded
+- HTLC timelock refund — solver reclaims BTC after expiry
+- Capital lock duration is bounded by timelock
+- Solver fee compensates for griefing risk
 
 **Impact Scope:** Temporary capital inefficiency. No permanent loss.
 
 ---
 
-#### C. Malicious Coordinator
+### C. Malicious Coordinator
 
 **Capabilities:**
-- Censor specific solvers
-- Always select same solver
-- Delay reselection intentionally
+- Censor specific solvers from receiving intents
+- Always select same solver regardless of bids
+- Delay reselection intentionally after solver failure
 
 **Attack Goals:**
-- Centralization
-- Collusion
+- Centralization of solver market
+- Collusion with favored solver
 - Market manipulation
 
 **Current Mitigations:**
-- Non-custodial design
-- Transparent winner announcement
+- Non-custodial design — coordinator never holds funds
+- Winner announcement is public and observable
 
-**Future Mitigation:** On-chain decentralized auction
+**Future Mitigation:** On-chain decentralized auction removes coordinator trust entirely.
 
 **Impact Scope:** Liveness degradation, market fairness distortion. No custody risk.
 
 ---
 
-#### D. Bitcoin Reorg Risk
+### D. Coordinator-Solver Collusion
 
 **Capabilities:**
-- Chain reorganization after lock
-- Confirmation reversal
+- Coordinator consistently selects a specific solver in exchange for fee sharing
+- Colluding solver submits non-competitive bids knowing it will win
 
-**Mitigation:**
-- Configurable confirmation depth
-- Settlement only after threshold
+**Attack Goals:**
+- Eliminate solver competition
+- Extract excess fees from users
 
-**Impact Scope:** Delayed settlement. Low-probability double-spend risk (bounded).
+**Mitigations:**
+- Currently none beyond observability
+- Future mitigation: verifiable on-chain selection with bid transparency
+
+**Impact Scope:** Degrades economic efficiency. Does not affect fund safety.
 
 ---
 
-### 9.3 Attack Surface Summary
+### E. Bitcoin Reorg Risk
 
-| Surface | Risk | Protection |
+**Capabilities:**
+- Chain reorganization after BTC lock
+- Confirmation reversal below threshold
+
+**Mitigation:**
+- Configurable confirmation depth threshold
+- Settlement only triggers after threshold is reached
+
+**Impact Scope:** Delayed settlement. Low-probability double-spend risk, bounded by confirmation depth.
+
+---
+
+### F. Confirmation Tracker Manipulation
+
+**Capabilities:**
+- In production, a compromised confirmation tracker could signal
+  premature finality before sufficient confirmations exist
+
+**Mitigation:**
+- In simulation this is internal and trusted
+- In production, confirmation data must come from an independent Bitcoin node
+
+**Impact Scope:** Premature settlement trigger. Mitigated by independent data sourcing.
+
+---
+
+## 3. Attack Surface Summary
+
+| Surface | Risk Level | Protection |
 |---|---|---|
 | Bid manipulation | Low | Sealed-bid model |
 | Capital oversubscription | Medium | Capital manager enforcement |
-| Preimage leakage | Critical | Preimage revealed only after settlement |
+| Preimage leakage | Critical | Preimage revealed only after EVM settlement confirms |
 | Timeout griefing | Medium | Timelock reclaim |
 | Coordinator bias | High (liveness) | Documented trust assumption |
+| Coordinator-solver collusion | High (economic) | Future on-chain selection |
+| Confirmation manipulation | Medium | Independent node requirement |
+
+> **Preimage leakage is Critical** because if the preimage is shared with
+> the solver before EVM settlement confirms, the solver can claim BTC
+> without the user receiving destination funds — breaking atomicity.
 
 ---
 
-### 9.4 Safety vs Liveness Separation
+## 4. Safety vs Liveness Separation
 
 This protocol explicitly separates:
 
-**Safety** — Enforced cryptographically (HTLC + timelock)
+**Safety** — Enforced cryptographically via HTLC and timelock.
+No party can steal funds regardless of coordinator or solver behavior.
 
-**Liveness** — Dependent on coordinator honesty and solver responsiveness
+**Liveness** — Dependent on coordinator honesty and solver responsiveness.
+Adversarial behavior slows settlement but does not cause fund loss.
 
-Even under adversarial conditions: **funds remain safe, settlement may slow.**
+Even under adversarial conditions:
+> Funds remain safe. Settlement may slow.
 
-This distinction is intentional.
+This distinction is intentional and is the core security property of HTLC-based bridges.
 
 ---
 
-### 9.5 Out-of-Scope Threats
+## 5. Out-of-Scope Threats
 
 The simulator does not model:
 
-- Network-level eclipse attacks
-- Miner extractable value (MEV)
-- Deep Bitcoin reorgs (> confirmation threshold)
+- Network-level eclipse attacks on Bitcoin nodes
+- Miner extractable value (MEV) on EVM side
+- Deep Bitcoin reorgs beyond confirmation threshold
 - EVM consensus failures
-- Private key compromise
+- Private key compromise of any actor
 
-These are external to protocol logic.
+These threats are external to protocol logic and outside simulation scope.
