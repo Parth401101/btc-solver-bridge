@@ -30,4 +30,7 @@ class Coordinator:
 
         print(f"Winner selected: Solver {winner.solver_id} "
               f"(fee={winner_bid['fee']:.4f})")
+
+        winner.lock_btc(intent)
+
         return winner

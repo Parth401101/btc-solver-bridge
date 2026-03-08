@@ -1,4 +1,6 @@
 from economics.capital import CapitalManager
+from bitcoin.htlc import HTLC
+from bridge.intent import IntentState
 
 
 class Solver:
@@ -19,6 +21,20 @@ class Solver:
             "solver": self,
             "fee": fee
         }
+
+    def lock_btc(self, intent):
+        if not self.capital_manager.can_lock(intent.source_amount_btc):
+            raise ValueError("Insufficient capital to lock")
+
+        self.capital_manager.lock(intent.source_amount_btc)
+
+        htlc = HTLC(intent.source_amount_btc)
+
+        intent.state = IntentState.BTC_LOCKED
+        intent.htlc = htlc
+
+        print(f"Solver {self.solver_id} locked BTC: {htlc}")
+        return htlc
 
     def __repr__(self):
         return (

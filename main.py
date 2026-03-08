@@ -1,6 +1,7 @@
 from bridge.intent import Intent
 from bridge.solver import Solver
 from bridge.coordinator import Coordinator
+from bitcoin.confirmation import ConfirmationTracker
 
 
 def main():
@@ -24,6 +25,16 @@ def main():
 
     print("Final Intent State:", intent)
     print("Winning Solver:", winner)
+    print("HTLC:", intent.htlc)
+    print(f"Solver remaining capital: {winner.capital_manager.available_capital}")
+
+    tracker = ConfirmationTracker(required_confirmations=3, block_time_seconds=2)
+    confirmed = tracker.wait_for_confirmations(intent.htlc)
+
+    if confirmed:
+        print(f"\nBitcoin finality reached. {tracker}")
+    else:
+        print("\nHTLC expired. Settlement aborted.")
 
 
 if __name__ == "__main__":
