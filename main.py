@@ -4,12 +4,17 @@ from bridge.coordinator import Coordinator
 from bridge.settlement import SettlementContract
 from bridge.timeout import TimeoutHandler
 from bitcoin.confirmation import ConfirmationTracker
-from bitcoin.htlc import HTLC
+from simulation.scenarios import (
+    scenario_no_valid_bids,
+    scenario_solver_offline_reselection,
+    scenario_coordinator_censorship,
+    scenario_all_solvers_exhausted,
+)
 
 
 def run_happy_path():
     print("\n" + "="*50)
-    print("SCENARIO 1: Happy Path")
+    print("SCENARIO: Happy Path")
     print("="*50)
 
     solvers = [
@@ -35,7 +40,7 @@ def run_happy_path():
 
 def run_htlc_expiry():
     print("\n" + "="*50)
-    print("SCENARIO 2: HTLC Expiry — User Griefing")
+    print("SCENARIO: HTLC Expiry — User Griefing")
     print("="*50)
 
     solvers = [
@@ -62,3 +67,7 @@ def run_htlc_expiry():
 if __name__ == "__main__":
     run_happy_path()
     run_htlc_expiry()
+    scenario_no_valid_bids()
+    scenario_solver_offline_reselection()
+    scenario_coordinator_censorship()
+    scenario_all_solvers_exhausted()
