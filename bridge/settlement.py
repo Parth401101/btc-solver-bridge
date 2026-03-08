@@ -1,4 +1,5 @@
 from bridge.intent import IntentState
+from bridge.state_machine import transition
 
 
 class SettlementContract:
@@ -16,14 +17,14 @@ class SettlementContract:
 
         if intent.htlc.is_expired():
             print("Settlement failed: HTLC has expired.")
-            intent.state = IntentState.EXPIRED
+            transition(intent, IntentState.EXPIRED)
             return False
 
         if tracker.confirmations < tracker.required_confirmations:
             print("Settlement failed: Confirmation threshold not reached.")
             return False
 
-        intent.state = IntentState.SETTLED
+        transition(intent, IntentState.SETTLED)
 
         self.settlements.append({
             "intent_id": intent.intent_id,

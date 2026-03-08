@@ -1,6 +1,7 @@
 from economics.capital import CapitalManager
 from bitcoin.htlc import HTLC
 from bridge.intent import IntentState
+from bridge.state_machine import transition
 
 
 class Solver:
@@ -27,10 +28,9 @@ class Solver:
             raise ValueError("Insufficient capital to lock")
 
         self.capital_manager.lock(intent.source_amount_btc)
-
         htlc = HTLC(intent.source_amount_btc)
 
-        intent.state = IntentState.BTC_LOCKED
+        transition(intent, IntentState.BTC_LOCKED)
         intent.htlc = htlc
 
         print(f"Solver {self.solver_id} locked BTC: {htlc}")

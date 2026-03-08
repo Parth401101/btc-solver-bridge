@@ -1,4 +1,5 @@
 from bridge.intent import IntentState
+from bridge.state_machine import transition
 
 
 class TimeoutHandler:
@@ -17,13 +18,13 @@ class TimeoutHandler:
               f"New score: {intent.winning_solver.reputation_score}")
 
         intent.winning_solver = None
-        intent.state = IntentState.QUOTED
+        transition(intent, IntentState.QUOTED)
 
         print(f"[TIMEOUT] Reselecting solver...")
         new_winner = coordinator.select_winner(intent)
 
         if new_winner is None:
-            intent.state = IntentState.EXPIRED
+            transition(intent, IntentState.EXPIRED)
             print(f"[TIMEOUT] No solvers available. Intent expired.")
             return False
 
@@ -45,7 +46,7 @@ class TimeoutHandler:
         print(f"[TIMEOUT] Solver capital restored: "
               f"{intent.winning_solver.capital_manager.available_capital}")
 
-        intent.state = IntentState.EXPIRED
+        transition(intent, IntentState.EXPIRED)
         intent.htlc.locked = False
 
         return True

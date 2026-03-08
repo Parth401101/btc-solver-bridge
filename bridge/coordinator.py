@@ -1,4 +1,5 @@
 from bridge.intent import IntentState
+from bridge.state_machine import transition
 
 
 class Coordinator:
@@ -14,23 +15,24 @@ class Coordinator:
         return bids
 
     def select_winner(self, intent):
-        intent.state = IntentState.QUOTED
+        if intent.state != IntentState.QUOTED:
+            transition(intent, IntentState.QUOTED)
+
         bids = self.collect_bids(intent)
 
         if not bids:
             print("No valid bids received. Intent expired.")
-            intent.state = IntentState.EXPIRED
+            transition(intent, IntentState.EXPIRED)
             return None
 
         winner_bid = min(bids, key=lambda x: x["fee"])
         winner = winner_bid["solver"]
 
-        intent.state = IntentState.WINNER_SELECTED
+        transition(intent, IntentState.WINNER_SELECTED)
         intent.winning_solver = winner
 
         print(f"Winner selected: Solver {winner.solver_id} "
               f"(fee={winner_bid['fee']:.4f})")
 
         winner.lock_btc(intent)
-
         return winner
