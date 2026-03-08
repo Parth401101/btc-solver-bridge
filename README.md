@@ -76,7 +76,8 @@ btc-solver-bridge/
 │   └── capital.py
 ├── simulation/
 │   ├── runner.py
-│   └── scenarios.py
+│   ├── scenarios.py
+│   └── logger.py
 ├── docs/
 │   ├── architecture.md
 │   ├── threat_model.md
@@ -89,18 +90,55 @@ btc-solver-bridge/
 
 ---
 
+## Running the Simulation
+```bash
+python3 main.py
+```
+
+Output:
+```
+==================================================
+BTC SOLVER BRIDGE — FULL SIMULATION
+==================================================
+
+--- Scenario 1: Happy Path ---
+--- Scenario 2: HTLC Expiry ---
+--- Scenario 3: Capital Exhaustion ---
+--- Scenario 4: Solver Offline ---
+--- Scenario 5: Coordinator Censorship ---
+--- Scenario 6: All Solvers Exhausted ---
+
+==================================================
+SIMULATION SUMMARY
+==================================================
+  ✅ PASS  Happy Path
+  ✅ PASS  HTLC Expiry
+  ✅ PASS  Capital Exhaustion
+  ✅ PASS  Solver Offline Reselection
+  ✅ PASS  Coordinator Censorship
+  ✅ PASS  All Solvers Exhausted
+
+6/6 scenarios passed.
+==================================================
+```
+
+---
+
 ## Roadmap
 
 - [x] Architecture specification
 - [x] Threat model
 - [x] Failure mode analysis
 - [x] State machine design
-- [ ] Intent lifecycle modeling
-- [ ] Multi-solver competition logic
-- [ ] Confirmation-based settlement handling
-- [ ] Timeout and refund simulation
-- [ ] Failure scenario modeling
-- [ ] Metrics and reporting
+- [x] Intent lifecycle modeling
+- [x] Multi-solver competition logic
+- [x] HTLC locking simulation
+- [x] Confirmation-based settlement handling
+- [x] Timeout and refund simulation
+- [x] Failure scenario modeling
+- [x] Simulation runner with structured logging
+- [ ] Test suite
+- [ ] Rust core rewrite
 
 ---
 
